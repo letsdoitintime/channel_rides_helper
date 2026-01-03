@@ -103,16 +103,19 @@ sudo systemctl start channel_rides_bot
 ## Getting Channel/Group IDs
 
 ### Method 1: Forward a message
+ 
 1. Forward any message from your channel/group to @userinfobot
 2. It will show you the channel/group ID
 
 ### Method 2: Using the bot
+ 
 1. Add your bot to the channel/group as admin
 2. Send a message to the channel/group
 3. Check bot logs - the ID will appear
 
 ### Method 3: Web Telegram
-1. Open https://web.telegram.org
+ 
+1. Open [Web Telegram](https://web.telegram.org)
 2. Navigate to your channel/group
 3. Look at the URL: `https://web.telegram.org/z/#-1001234567890`
 
@@ -142,7 +145,7 @@ sudo systemctl start channel_rides_bot
 ## Configuration Options
 
 | Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
+| --- | --- | --- | --- |
 | `BOT_TOKEN` | Yes | - | Telegram bot token from @BotFather |
 | `RIDES_CHANNEL_ID` | Yes | - | Channel ID to monitor |
 | `DISCUSSION_GROUP_ID` | No | - | Linked discussion group ID |
@@ -158,22 +161,25 @@ sudo systemctl start channel_rides_bot
 
 ### Registration Modes
 
-**1. edit_channel** (Recommended)
+#### edit_channel (Recommended)
+
 - Edits the original channel post to add buttons
 - Only works if the bot posted the message
 - Most integrated experience
 
-**2. discussion_thread**
+#### discussion_thread
+
 - Posts registration card in linked discussion group
 - Good for channels with active discussions
 - Requires `DISCUSSION_GROUP_ID`
 
-**3. channel_reply_post**
+#### channel_reply_post
+
 - Creates a new post in the channel as a reply
 - Falls back to a new post with link button if reply fails
 - Works in all scenarios
 
-**Fallback Chain**: The bot tries modes in order. If your configured mode fails, it automatically tries the next one.
+Fallback chain: The bot tries modes in order. If your configured mode fails, it automatically tries the next one.
 
 ## Usage
 
@@ -194,13 +200,16 @@ When a ride post appears in the channel:
 
 ### For Admins
 
+
 **Check bot status:**
-```
+
+```text
 /ping
 ```
 
 **View voters for a post:**
-```
+
+```text
 /voters 123                          # Using message ID
 /voters https://t.me/c/1234567890/123  # Using message link
 ```
