@@ -103,18 +103,18 @@ sudo systemctl start channel_rides_bot
 ## Getting Channel/Group IDs
 
 ### Method 1: Forward a message
- 
+
 1. Forward any message from your channel/group to @userinfobot
 2. It will show you the channel/group ID
 
 ### Method 2: Using the bot
- 
+
 1. Add your bot to the channel/group as admin
 2. Send a message to the channel/group
 3. Check bot logs - the ID will appear
 
 ### Method 3: Web Telegram
- 
+
 1. Open [Web Telegram](https://web.telegram.org)
 2. Navigate to your channel/group
 3. Look at the URL: `https://web.telegram.org/z/#-1001234567890`
@@ -216,7 +216,9 @@ When a ride post appears in the channel:
 ## Database Schema
 
 ### posts table
+
 Stores registration card information:
+
 - `channel_id` - Channel where post was made
 - `channel_message_id` - Original message ID
 - `mode` - Registration mode used
@@ -226,7 +228,9 @@ Stores registration card information:
 - `created_at` - Timestamp
 
 ### votes table
+
 Stores user votes:
+
 - `channel_id` - Channel ID
 - `channel_message_id` - Message ID
 - `user_id` - Telegram user ID
@@ -288,25 +292,30 @@ channel_rides_helper/
 ## Troubleshooting
 
 ### Bot doesn't respond
+
 - Check bot token is correct
 - Verify bot is admin in the channel
 - Check logs: `tail -f logs/bot.log`
 
 ### Registration cards not appearing
+
 - Verify `REGISTRATION_MODE` is correct
 - Check bot has permission to post/edit messages
 - Try changing to `channel_reply_post` mode
 
 ### Hashtag filtering not working
+
 - Ensure hashtags in `.env` match exactly (including #)
 - Check `RIDE_FILTER=hashtag` is set
 - Hashtags are case-insensitive
 
 ### Database errors
+
 - Ensure `data/` directory exists and is writable
 - Check SQLite is installed: `python -c "import sqlite3"`
 
 ### Permission errors
+
 - Bot needs to be admin in channel
 - For `edit_channel` mode, bot must be the author
 - For `discussion_thread`, bot needs to be in discussion group
@@ -336,6 +345,7 @@ MIT License - feel free to use this bot for your cycling community!
 ## Support
 
 For issues and questions:
+
 - Create an issue on GitHub
 - Check logs in `logs/bot.log`
 - Review configuration in `.env`
@@ -343,6 +353,7 @@ For issues and questions:
 ## Acknowledgments
 
 Built with:
+
 - [aiogram](https://github.com/aiogram/aiogram) - Telegram Bot framework
 - [aiosqlite](https://github.com/omnilib/aiosqlite) - Async SQLite
 - [loguru](https://github.com/Delgan/loguru) - Logging made simple
