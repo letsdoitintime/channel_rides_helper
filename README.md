@@ -200,14 +200,13 @@ When a ride post appears in the channel:
 
 ### For Admins
 
-
-**Check bot status:**
+#### Check bot status
 
 ```text
 /ping
 ```
 
-**View voters for a post:**
+#### View voters for a post
 
 ```text
 /voters 123                          # Using message ID
@@ -256,7 +255,7 @@ pytest tests/test_db.py
 
 ### Project Structure
 
-```
+```text
 channel_rides_helper/
 ├── app/
 │   ├── __init__.py
