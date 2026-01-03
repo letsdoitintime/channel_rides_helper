@@ -1,5 +1,5 @@
 """Callback handlers for vote buttons and other interactions."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
 from loguru import logger
@@ -44,7 +44,7 @@ def setup_callbacks(
                     channel_id, message_id, callback.from_user.id
                 )
                 if last_vote:
-                    time_since_last = datetime.utcnow() - last_vote
+                    time_since_last = datetime.now(timezone.utc) - last_vote
                     if time_since_last < timedelta(seconds=config.vote_cooldown):
                         remaining = config.vote_cooldown - time_since_last.total_seconds()
                         await callback.answer(
@@ -150,9 +150,48 @@ def setup_callbacks(
             if not any(voters.values()):
                 text += "_No votes yet_"
             
-            # Send as a message reply
-            await callback.message.reply(text, parse_mode="Markdown")
-            await callback.answer()
+            # Check if discussion group is configured
+            if not config.discussion_group_id:
+                await callback.answer("Discussion group not configured", show_alert=True)
+                return
+            
+            # Get the post to check for previous voters message and get thread info
+            post = await db.get_post(channel_id, message_id)
+            
+            # Delete previous voters message if exists
+            if post and post.get("voters_message_id"):
+                try:
+                    await callback.bot.delete_message(
+                        chat_id=config.discussion_group_id,
+                        message_id=post["voters_message_id"]
+                    )
+                except Exception as e:
+                    logger.debug(f"Could not delete previous voters message: {e}")
+            
+            # Get the discussion message ID to reply to
+            discussion_message_id = post.get("discussion_message_id") if post else None
+            
+            if not discussion_message_id:
+                await callback.answer("Discussion thread not found", show_alert=True)
+                return
+            
+            # Send new voters message to discussion group as reply to the thread
+            try:
+                sent = await callback.bot.send_message(
+                    chat_id=config.discussion_group_id,
+                    text=text,
+                    parse_mode="Markdown",
+                    reply_to_message_id=discussion_message_id,
+                )
+            except Exception as e:
+                logger.error(f"Could not send voters message: {e}")
+                await callback.answer("Failed to send voters list", show_alert=True)
+                return
+            
+            # Store the new voters message ID
+            await db.update_voters_message(channel_id, message_id, sent.message_id)
+            
+            await callback.answer("Voters list sent to discussion group!")
             
         except Exception as e:
             logger.error(f"Error handling voters: {e}", exc_info=True)

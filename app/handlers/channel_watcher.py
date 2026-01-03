@@ -78,16 +78,28 @@ def setup_channel_watcher(
             # Create registration
             logger.info(f"Creating registration for message {message.message_id} in channel {message.chat.id}")
             
-            success = await registration_service.create_registration(
-                channel_id=message.chat.id,
-                message_id=message.message_id,
-                media_group_id=media_group_id,
-            )
-            
-            if success:
-                logger.info(f"Registration created successfully for {message.message_id}")
+            # For discussion_thread mode, create a pending post and wait for discussion watcher
+            if config.registration_mode == "discussion_thread":
+                # Create pending post - discussion watcher will complete it
+                await db.create_post(
+                    channel_id=message.chat.id,
+                    channel_message_id=message.message_id,
+                    mode="discussion_thread",
+                    media_group_id=media_group_id,
+                )
+                logger.info(f"Created pending post for discussion_thread mode, waiting for forward...")
             else:
-                logger.warning(f"Failed to create registration for {message.message_id}")
+                # For other modes, create registration immediately
+                success = await registration_service.create_registration(
+                    channel_id=message.chat.id,
+                    message_id=message.message_id,
+                    media_group_id=media_group_id,
+                )
+                
+                if success:
+                    logger.info(f"Registration created successfully for {message.message_id}")
+                else:
+                    logger.warning(f"Failed to create registration for {message.message_id}")
             
             # Clean up media group tracking
             if media_group_id:

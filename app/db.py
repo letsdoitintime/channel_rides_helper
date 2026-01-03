@@ -34,6 +34,8 @@ class Database:
                 mode TEXT NOT NULL,
                 registration_chat_id INTEGER,
                 registration_message_id INTEGER,
+                voters_message_id INTEGER,
+                discussion_message_id INTEGER,
                 media_group_id TEXT,
                 created_at TEXT NOT NULL,
                 UNIQUE(channel_id, channel_message_id)
@@ -156,6 +158,40 @@ class Database:
             WHERE channel_id = ? AND channel_message_id = ?
             """,
             (registration_chat_id, registration_message_id, channel_id, channel_message_id),
+        )
+        await self.conn.commit()
+    
+    async def update_voters_message(
+        self,
+        channel_id: int,
+        channel_message_id: int,
+        voters_message_id: int,
+    ):
+        """Update voters message ID for a post."""
+        await self.conn.execute(
+            """
+            UPDATE posts
+            SET voters_message_id = ?
+            WHERE channel_id = ? AND channel_message_id = ?
+            """,
+            (voters_message_id, channel_id, channel_message_id),
+        )
+        await self.conn.commit()
+    
+    async def update_discussion_message_id(
+        self,
+        channel_id: int,
+        channel_message_id: int,
+        discussion_message_id: int,
+    ):
+        """Update discussion message ID for a post."""
+        await self.conn.execute(
+            """
+            UPDATE posts
+            SET discussion_message_id = ?
+            WHERE channel_id = ? AND channel_message_id = ?
+            """,
+            (discussion_message_id, channel_id, channel_message_id),
         )
         await self.conn.commit()
     

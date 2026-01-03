@@ -13,6 +13,7 @@ from app.config import Config
 from app.db import Database
 from app.services.registration import RegistrationService
 from app.handlers.channel_watcher import setup_channel_watcher
+from app.handlers.discussion_watcher import setup_discussion_watcher
 from app.handlers.callbacks import setup_callbacks
 from app.handlers.admin import setup_admin_commands
 
@@ -116,11 +117,13 @@ async def main():
         
         # Setup handlers
         channel_watcher_router = setup_channel_watcher(db, config, registration_service)
+        discussion_watcher_router = setup_discussion_watcher(db, config, registration_service)
         callbacks_router = setup_callbacks(db, config, registration_service)
         admin_router = setup_admin_commands(db, config)
         
         # Include routers
         dp.include_router(channel_watcher_router)
+        dp.include_router(discussion_watcher_router)
         dp.include_router(callbacks_router)
         dp.include_router(admin_router)
         
