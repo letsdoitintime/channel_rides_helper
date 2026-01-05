@@ -200,22 +200,57 @@ Test Coverage:
 3. **Dependency Injection**: Services receive dependencies via constructor
 4. **Factory Pattern**: `from_dict()` methods for domain models
 5. **Strategy Pattern**: Fallback chain for registration modes
+6. **Interface Segregation**: Abstract interfaces (ABC) for repositories
+
+## Recent Enhancements (Latest)
+
+### Service Layer Expansion
+
+**New Services:**
+- **VoteService**: Encapsulates vote operations with rate limiting
+- **MessageFilterService**: Handles message filtering logic
+
+**Benefits:**
+- Reduced handler complexity
+- Better separation of business logic
+- Improved testability with 17 new tests
+- Consistent behavior across handlers
+
+**Test Coverage:**
+- 73 tests total (up from 56)
+- VoteService: 7 tests
+- MessageFilterService: 10 tests
+
+See [SERVICE_LAYER.md](SERVICE_LAYER.md) for detailed documentation.
+
+### Interface Abstractions
+
+**New Interfaces:**
+- `IPostRepository`: Abstract interface for post operations
+- `IVoteRepository`: Abstract interface for vote operations
+
+**Benefits:**
+- Better testability (easier mocking)
+- Contract-driven development
+- Swappable implementations
+- Loose coupling
 
 ## Benefits Summary
 
 1. **Maintainability**: Clear separation of concerns makes code easier to understand and modify
 2. **Testability**: Modules can be tested in isolation with mocking
-3. **Reusability**: Utilities can be used across different handlers
-4. **Type Safety**: Enums and domain models provide compile-time safety
+3. **Reusability**: Utilities and services can be used across different handlers
+4. **Type Safety**: Enums, domain models, and type hints provide compile-time safety
 5. **Error Handling**: Custom exceptions provide clear error semantics
 6. **Extensibility**: Easy to add new features without modifying existing code
+7. **SOLID Principles**: Follows Single Responsibility, Open/Closed, Dependency Inversion, and Interface Segregation
 
 ## Migration Notes
 
 The refactoring maintains backward compatibility:
 - Existing database schema unchanged
 - Bot behavior unchanged
-- All tests pass (30 tests)
+- All tests pass (73 tests)
 - No breaking changes to configuration
 
 ## Future Improvements
@@ -223,12 +258,11 @@ The refactoring maintains backward compatibility:
 Potential areas for further enhancement:
 
 1. **Dependency Injection Container**: Use a DI framework for better dependency management
-2. **Service Layer Expansion**: Move more business logic from handlers to services
-3. **Event System**: Implement event-driven architecture for loose coupling
-4. **Caching Layer**: Add caching for frequently accessed data
-5. **Async Context Managers**: Better resource management for database connections
-6. **Type Hints**: Add complete type hints throughout the codebase
-7. **Documentation**: Add docstring standards and API documentation
+2. **Event System**: Implement event-driven architecture for loose coupling
+3. **Caching Layer**: Add caching for frequently accessed data
+4. **Async Context Managers**: Better resource management for database connections
+5. **Structured Logging**: Add correlation IDs and request context
+6. **Configuration with Pydantic**: Better validation and auto-documentation
 
 ## Conclusion
 

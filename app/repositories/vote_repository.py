@@ -5,10 +5,11 @@ from datetime import datetime
 from app.db import Database
 from app.domain.models import Vote, VoteStatus, VoteCounts
 from app.exceptions import DatabaseError
+from app.repositories.interfaces import IVoteRepository
 from loguru import logger
 
 
-class VoteRepository:
+class VoteRepository(IVoteRepository):
     """Repository for vote operations."""
     
     def __init__(self, db: Database):

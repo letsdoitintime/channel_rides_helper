@@ -1,14 +1,14 @@
 """Post repository for managing post data."""
 from typing import Optional
-from datetime import datetime, timezone
 
 from app.db import Database
 from app.domain.models import Post, RegistrationMode
 from app.exceptions import DatabaseError
+from app.repositories.interfaces import IPostRepository
 from loguru import logger
 
 
-class PostRepository:
+class PostRepository(IPostRepository):
     """Repository for post operations."""
     
     def __init__(self, db: Database):
