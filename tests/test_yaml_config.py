@@ -226,7 +226,7 @@ access_control:
         assert not loader.is_available()
         assert loader.get_visibility() is None
         assert loader.get_custom_text() is None
-        assert loader.get_additional_buttons() is None
+        assert loader.get_additional_buttons() == []  # Returns empty list, not None
 
 
 class TestYAMLIntegration:
@@ -264,8 +264,14 @@ access_control:
         
         # Mock the button config loader to use our temp file
         from app import button_config_loader
+        from app.button_config_loader import ButtonConfigLoader
+        
+        # Create a new loader instance for this test
+        test_loader = ButtonConfigLoader(str(button_yaml))
+        
+        # Temporarily replace the singleton
         original_loader = button_config_loader._loader
-        button_config_loader._loader = ButtonConfigLoader(str(button_yaml))
+        button_config_loader._loader = test_loader
         
         try:
             config = Config.from_env()
@@ -288,8 +294,14 @@ access_control:
         
         # Mock the button config loader to return unavailable
         from app import button_config_loader
+        from app.button_config_loader import ButtonConfigLoader
+        
+        # Create a new loader instance for this test
+        test_loader = ButtonConfigLoader("/nonexistent/file.yaml")
+        
+        # Temporarily replace the singleton
         original_loader = button_config_loader._loader
-        button_config_loader._loader = ButtonConfigLoader("/nonexistent/file.yaml")
+        button_config_loader._loader = test_loader
         
         try:
             config = Config.from_env()
@@ -332,8 +344,14 @@ en:
         
         # Mock the translation loader
         from app import translation_loader
+        from app.translation_loader import TranslationLoader
+        
+        # Create a new loader instance for this test
+        test_loader = TranslationLoader(str(trans_yaml))
+        
+        # Temporarily replace the singleton
         original_loader = translation_loader._loader
-        translation_loader._loader = TranslationLoader(str(trans_yaml))
+        translation_loader._loader = test_loader
         
         try:
             button_trans, msg_trans = get_translations("en")
@@ -349,8 +367,14 @@ en:
         """Test that translations fall back to hardcoded when YAML fails."""
         # Mock the translation loader to return None
         from app import translation_loader
+        from app.translation_loader import TranslationLoader
+        
+        # Create a new loader instance for this test
+        test_loader = TranslationLoader("/nonexistent/file.yaml")
+        
+        # Temporarily replace the singleton
         original_loader = translation_loader._loader
-        translation_loader._loader = TranslationLoader("/nonexistent/file.yaml")
+        translation_loader._loader = test_loader
         
         try:
             button_trans, msg_trans = get_translations("en")

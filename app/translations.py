@@ -84,7 +84,7 @@ HARDCODED_TRANSLATIONS: Dict[Language, tuple[ButtonTranslations, MessageTranslat
 }
 
 
-def _load_from_yaml(language: str) -> tuple[ButtonTranslations, MessageTranslations]:
+def _load_from_yaml(language: str) -> tuple[ButtonTranslations, MessageTranslations] | None:
     """Load translations from YAML file.
     
     Args:

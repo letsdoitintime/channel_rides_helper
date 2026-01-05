@@ -72,14 +72,14 @@ class ButtonConfigLoader:
             return None
         return self._config.get("custom_text")
     
-    def get_additional_buttons(self) -> Optional[List[Dict[str, str]]]:
+    def get_additional_buttons(self) -> List[Dict[str, str]]:
         """Get additional buttons list.
         
         Returns:
-            List of additional buttons or None if not available
+            List of additional buttons, or empty list if not available or None in config
         """
         if self._config is None:
-            return None
+            return []
         buttons = self._config.get("additional_buttons")
         if buttons is None:
             return []
