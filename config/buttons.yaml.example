@@ -1,0 +1,33 @@
+# Optional button configuration file
+# This file is optional - if not present, button configuration will be read from environment variables
+# If present, this file takes precedence over environment variables
+
+# Button visibility - control which buttons are shown
+visibility:
+  show_join: true        # Show "Join" button
+  show_maybe: true       # Show "Maybe" button
+  show_decline: true     # Show "Decline" button
+  show_voters: true      # Show "Voters" list button
+  show_refresh: true     # Show "Refresh" button
+
+# Custom button text (optional)
+# If specified, these override the language translations
+# If not specified or set to null, translations from translations.yaml are used
+custom_text:
+  join: null            # e.g., "✅ I'm In"
+  maybe: null           # e.g., "❔ Not Sure"
+  decline: null         # e.g., "❌ Can't Make It"
+  voters: null          # e.g., "👥 Show List"
+  refresh: null         # e.g., "🔄 Update"
+
+# Additional buttons with URLs (optional)
+# These will be added below the main buttons
+additional_buttons:
+  # - text: "Rules"
+  #   url: "https://example.com/rules"
+  # - text: "Map"
+  #   url: "https://example.com/map"
+
+# Access control
+access_control:
+  require_vote_to_see_voters: false  # If true, users must vote before viewing voters list

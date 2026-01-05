@@ -3,9 +3,11 @@ import os
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 from dotenv import load_dotenv
+from loguru import logger
 
 from app.exceptions import ConfigurationError
 from app.translations import Language
+from app.button_config_loader import get_button_config_loader
 
 load_dotenv()
 
@@ -185,20 +187,8 @@ class Config:
         language = language_str
         
         # Parse button configuration
-        button_config = ButtonConfig(
-            show_join=os.getenv("BUTTON_SHOW_JOIN", "true").lower() == "true",
-            show_maybe=os.getenv("BUTTON_SHOW_MAYBE", "true").lower() == "true",
-            show_decline=os.getenv("BUTTON_SHOW_DECLINE", "true").lower() == "true",
-            show_voters=os.getenv("BUTTON_SHOW_VOTERS", "true").lower() == "true",
-            show_refresh=os.getenv("BUTTON_SHOW_REFRESH", "true").lower() == "true",
-            custom_join_text=os.getenv("BUTTON_CUSTOM_JOIN_TEXT") or None,
-            custom_maybe_text=os.getenv("BUTTON_CUSTOM_MAYBE_TEXT") or None,
-            custom_decline_text=os.getenv("BUTTON_CUSTOM_DECLINE_TEXT") or None,
-            custom_voters_text=os.getenv("BUTTON_CUSTOM_VOTERS_TEXT") or None,
-            custom_refresh_text=os.getenv("BUTTON_CUSTOM_REFRESH_TEXT") or None,
-            additional_buttons=cls._parse_additional_buttons(os.getenv("BUTTON_ADDITIONAL", "")),
-            require_vote_to_see_voters=os.getenv("BUTTON_REQUIRE_VOTE_FOR_VOTERS", "false").lower() == "true",
-        )
+        # Try to load from YAML first, fallback to environment variables
+        button_config = cls._load_button_config()
         
         return cls(
             bot_token=bot_token,
@@ -217,6 +207,60 @@ class Config:
             button_config=button_config,
             language=language,
         )
+    
+    @staticmethod
+    def _load_button_config() -> ButtonConfig:
+        """Load button configuration from YAML or environment variables.
+        
+        Tries to load from config/buttons.yaml first. If not available,
+        falls back to environment variables.
+        
+        Returns:
+            ButtonConfig instance
+        """
+        loader = get_button_config_loader()
+        
+        if loader.is_available():
+            logger.info("Loading button configuration from YAML file")
+            
+            # Load from YAML
+            visibility = loader.get_visibility() or {}
+            custom_text = loader.get_custom_text() or {}
+            additional_buttons = loader.get_additional_buttons() or []
+            access_control = loader.get_access_control() or {}
+            
+            return ButtonConfig(
+                show_join=visibility.get("show_join", True),
+                show_maybe=visibility.get("show_maybe", True),
+                show_decline=visibility.get("show_decline", True),
+                show_voters=visibility.get("show_voters", True),
+                show_refresh=visibility.get("show_refresh", True),
+                custom_join_text=custom_text.get("join"),
+                custom_maybe_text=custom_text.get("maybe"),
+                custom_decline_text=custom_text.get("decline"),
+                custom_voters_text=custom_text.get("voters"),
+                custom_refresh_text=custom_text.get("refresh"),
+                additional_buttons=additional_buttons,
+                require_vote_to_see_voters=access_control.get("require_vote_to_see_voters", False),
+            )
+        else:
+            logger.info("Loading button configuration from environment variables")
+            
+            # Fallback to environment variables
+            return ButtonConfig(
+                show_join=os.getenv("BUTTON_SHOW_JOIN", "true").lower() == "true",
+                show_maybe=os.getenv("BUTTON_SHOW_MAYBE", "true").lower() == "true",
+                show_decline=os.getenv("BUTTON_SHOW_DECLINE", "true").lower() == "true",
+                show_voters=os.getenv("BUTTON_SHOW_VOTERS", "true").lower() == "true",
+                show_refresh=os.getenv("BUTTON_SHOW_REFRESH", "true").lower() == "true",
+                custom_join_text=os.getenv("BUTTON_CUSTOM_JOIN_TEXT") or None,
+                custom_maybe_text=os.getenv("BUTTON_CUSTOM_MAYBE_TEXT") or None,
+                custom_decline_text=os.getenv("BUTTON_CUSTOM_DECLINE_TEXT") or None,
+                custom_voters_text=os.getenv("BUTTON_CUSTOM_VOTERS_TEXT") or None,
+                custom_refresh_text=os.getenv("BUTTON_CUSTOM_REFRESH_TEXT") or None,
+                additional_buttons=Config._parse_additional_buttons(os.getenv("BUTTON_ADDITIONAL", "")),
+                require_vote_to_see_voters=os.getenv("BUTTON_REQUIRE_VOTE_FOR_VOTERS", "false").lower() == "true",
+            )
     
     @staticmethod
     def _parse_additional_buttons(buttons_str: str) -> List[Dict[str, str]]:
