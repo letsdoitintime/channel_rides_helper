@@ -7,6 +7,8 @@ from loguru import logger
 
 from app.db import Database
 from app.config import Config
+from app.domain.models import RegistrationMode, VoteCounts
+from app.utils.message_parser import create_message_link
 
 
 class RegistrationService:
@@ -107,15 +109,15 @@ class RegistrationService:
         
         for mode in modes_to_try:
             try:
-                if mode == "edit_channel":
+                if mode == RegistrationMode.EDIT_CHANNEL:
                     success, reg_chat_id, reg_message_id = await self._try_edit_channel(
                         channel_id, message_id, text, keyboard
                     )
-                elif mode == "discussion_thread":
+                elif mode == RegistrationMode.DISCUSSION_THREAD:
                     success, reg_chat_id, reg_message_id = await self._try_discussion_thread(
                         channel_id, message_id, text, keyboard
                     )
-                elif mode == "channel_reply_post":
+                elif mode == RegistrationMode.CHANNEL_REPLY_POST:
                     success, reg_chat_id, reg_message_id = await self._try_channel_reply(
                         channel_id, message_id, text, keyboard
                     )
@@ -127,12 +129,12 @@ class RegistrationService:
                     await self.db.create_post(
                         channel_id=channel_id,
                         channel_message_id=message_id,
-                        mode=mode,
+                        mode=mode.value,
                         registration_chat_id=reg_chat_id,
                         registration_message_id=reg_message_id,
                         media_group_id=media_group_id,
                     )
-                    logger.info(f"Registration created using mode: {mode}")
+                    logger.info(f"Registration created using mode: {mode.value}")
                     return True
                     
             except Exception as e:
@@ -144,10 +146,15 @@ class RegistrationService:
     
     def _get_fallback_chain(self) -> list:
         """Get the fallback chain starting from configured mode."""
-        all_modes = ["edit_channel", "discussion_thread", "channel_reply_post"]
+        all_modes = [
+            RegistrationMode.EDIT_CHANNEL,
+            RegistrationMode.DISCUSSION_THREAD,
+            RegistrationMode.CHANNEL_REPLY_POST
+        ]
         
         # Start with configured mode
-        start_index = all_modes.index(self.config.registration_mode)
+        config_mode = RegistrationMode(self.config.registration_mode)
+        start_index = all_modes.index(config_mode)
         
         # Return modes starting from configured one
         return all_modes[start_index:] + all_modes[:start_index]
@@ -280,14 +287,7 @@ class RegistrationService:
     
     def _get_message_link(self, channel_id: int, message_id: int) -> str:
         """Generate t.me link for a message."""
-        # Convert channel_id to format suitable for links
-        # For private channels: t.me/c/{channel_id without -100 prefix}/{message_id}
-        if str(channel_id).startswith("-100"):
-            clean_id = str(channel_id)[4:]  # Remove -100 prefix
-            return f"https://t.me/c/{clean_id}/{message_id}"
-        else:
-            # For public channels, would need username (not implemented)
-            return f"https://t.me/c/{channel_id}/{message_id}"
+        return create_message_link(channel_id, message_id)
     
     async def _repair_post_registration(
         self, channel_id: int, message_id: int, mode: str
