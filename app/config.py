@@ -175,8 +175,14 @@ class Config:
         
         show_changed_mind_stats = os.getenv("SHOW_CHANGED_MIND_STATS", "true").lower() == "true"
         
-        # Parse language
-        language = os.getenv("LANGUAGE", "en").lower()
+        # Parse language (validate and normalize)
+        language_str = os.getenv("LANGUAGE", "en").lower()
+        if language_str not in cls.VALID_LANGUAGES:
+            raise ConfigurationError(
+                f"Invalid LANGUAGE: {language_str}. "
+                f"Valid options: {', '.join(cls.VALID_LANGUAGES)}"
+            )
+        language = language_str
         
         # Parse button configuration
         button_config = ButtonConfig(

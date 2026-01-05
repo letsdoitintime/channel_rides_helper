@@ -82,5 +82,17 @@ TRANSLATIONS: Dict[Language, tuple[ButtonTranslations, MessageTranslations]] = {
 
 
 def get_translations(language: Language = "en") -> tuple[ButtonTranslations, MessageTranslations]:
-    """Get translations for the specified language."""
-    return TRANSLATIONS.get(language, TRANSLATIONS["en"])
+    """Get translations for the specified language.
+    
+    Args:
+        language: Language code ('en' or 'ua')
+        
+    Returns:
+        Tuple of (ButtonTranslations, MessageTranslations)
+        
+    Note:
+        Falls back to English if language is not found.
+    """
+    if language not in TRANSLATIONS:
+        return TRANSLATIONS["en"]
+    return TRANSLATIONS[language]
