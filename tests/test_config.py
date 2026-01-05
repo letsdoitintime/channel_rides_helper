@@ -3,6 +3,7 @@ import pytest
 import os
 
 from app.config import Config
+from app.exceptions import ConfigurationError
 
 
 def test_config_from_env():
@@ -47,7 +48,7 @@ def test_config_invalid_mode():
     os.environ["RIDES_CHANNEL_ID"] = "-1001234567890"
     os.environ["REGISTRATION_MODE"] = "invalid_mode"
     
-    with pytest.raises(ValueError, match="Invalid REGISTRATION_MODE"):
+    with pytest.raises(ConfigurationError, match="Invalid REGISTRATION_MODE"):
         Config.from_env()
 
 
@@ -58,7 +59,7 @@ def test_config_invalid_filter():
     os.environ["REGISTRATION_MODE"] = "edit_channel"  # Set valid mode first
     os.environ["RIDE_FILTER"] = "invalid_filter"
     
-    with pytest.raises(ValueError, match="Invalid RIDE_FILTER"):
+    with pytest.raises(ConfigurationError, match="Invalid RIDE_FILTER"):
         Config.from_env()
 
 
@@ -68,7 +69,7 @@ def test_config_missing_token():
         del os.environ["BOT_TOKEN"]
     os.environ["RIDES_CHANNEL_ID"] = "-1001234567890"
     
-    with pytest.raises(ValueError, match="BOT_TOKEN is required"):
+    with pytest.raises(ConfigurationError, match="BOT_TOKEN is required"):
         Config.from_env()
 
 
@@ -78,5 +79,44 @@ def test_config_missing_channel_id():
     if "RIDES_CHANNEL_ID" in os.environ:
         del os.environ["RIDES_CHANNEL_ID"]
     
-    with pytest.raises(ValueError, match="RIDES_CHANNEL_ID is required"):
+    with pytest.raises(ConfigurationError, match="RIDES_CHANNEL_ID is required"):
+        Config.from_env()
+
+
+def test_config_invalid_log_level():
+    """Test invalid log level."""
+    os.environ["BOT_TOKEN"] = "test_token"
+    os.environ["RIDES_CHANNEL_ID"] = "-1001234567890"
+    os.environ["REGISTRATION_MODE"] = "edit_channel"
+    os.environ["RIDE_FILTER"] = "all"
+    os.environ["LOG_LEVEL"] = "INVALID"
+    
+    with pytest.raises(ConfigurationError, match="Invalid LOG_LEVEL"):
+        Config.from_env()
+
+
+def test_config_negative_vote_cooldown():
+    """Test negative vote cooldown."""
+    os.environ["BOT_TOKEN"] = "test_token"
+    os.environ["RIDES_CHANNEL_ID"] = "-1001234567890"
+    os.environ["REGISTRATION_MODE"] = "edit_channel"
+    os.environ["RIDE_FILTER"] = "all"
+    os.environ["LOG_LEVEL"] = "INFO"
+    os.environ["VOTE_COOLDOWN"] = "-1"
+    
+    with pytest.raises(ConfigurationError, match="VOTE_COOLDOWN must be non-negative"):
+        Config.from_env()
+
+
+def test_config_hashtag_filter_without_hashtags():
+    """Test hashtag filter without hashtags."""
+    os.environ["BOT_TOKEN"] = "test_token"
+    os.environ["RIDES_CHANNEL_ID"] = "-1001234567890"
+    os.environ["REGISTRATION_MODE"] = "edit_channel"
+    os.environ["LOG_LEVEL"] = "INFO"
+    os.environ["VOTE_COOLDOWN"] = "1"
+    os.environ["RIDE_FILTER"] = "hashtag"
+    os.environ["RIDE_HASHTAGS"] = ""
+    
+    with pytest.raises(ConfigurationError, match="RIDE_HASHTAGS must be provided"):
         Config.from_env()
