@@ -16,6 +16,12 @@ A production-ready Telegram bot for managing ride registrations from a channel. 
   - `channel_reply_post` - Create reply post in channel
 - **🛡️ Rate Limiting**: Prevent spam clicking on vote buttons
 - **👑 Admin Commands**: `/ping` and `/voters` for administrators
+- **🎨 Configurable Buttons**: Customize button visibility, text, and behavior
+  - Hide/show any button (join, maybe, decline, voters, refresh)
+  - Custom button text or use translations
+  - Add additional URL buttons
+  - Restrict voters list to participants only
+- **🌐 Multi-Language Support**: English and Ukrainian translations built-in
 
 ## Requirements
 
@@ -144,6 +150,8 @@ sudo systemctl start channel_rides_bot
 
 ## Configuration Options
 
+### Core Settings
+
 | Variable | Required | Default | Description |
 | --- | --- | --- | --- |
 | `BOT_TOKEN` | Yes | - | Telegram bot token from @BotFather |
@@ -158,6 +166,82 @@ sudo systemctl start channel_rides_bot
 | `LOG_FILE` | No | `./logs/bot.log` | Log file path |
 | `VOTE_COOLDOWN` | No | `1` | Seconds between votes per user |
 | `SHOW_CHANGED_MIND_STATS` | No | `true` | Show changed mind count |
+| `LANGUAGE` | No | `en` | Language: `en` (English) or `ua` (Ukrainian) |
+
+### Button Configuration
+
+The bot provides a flexible button configuration system allowing you to customize the registration interface.
+
+#### Button Visibility
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `BUTTON_SHOW_JOIN` | `true` | Show the "Join" vote button |
+| `BUTTON_SHOW_MAYBE` | `true` | Show the "Maybe" vote button |
+| `BUTTON_SHOW_DECLINE` | `true` | Show the "Decline" vote button |
+| `BUTTON_SHOW_VOTERS` | `true` | Show the "Voters" list button |
+| `BUTTON_SHOW_REFRESH` | `true` | Show the "Refresh" button |
+
+**Note:** At least one vote button (Join, Maybe, or Decline) must be visible.
+
+#### Custom Button Text
+
+Override default button text (otherwise uses language translations):
+
+| Variable | Description | Example |
+| --- | --- | --- |
+| `BUTTON_CUSTOM_JOIN_TEXT` | Custom text for Join button | `✅ I'm In` |
+| `BUTTON_CUSTOM_MAYBE_TEXT` | Custom text for Maybe button | `❔ Not Sure` |
+| `BUTTON_CUSTOM_DECLINE_TEXT` | Custom text for Decline button | `❌ Can't Make It` |
+| `BUTTON_CUSTOM_VOTERS_TEXT` | Custom text for Voters button | `👥 Show List` |
+| `BUTTON_CUSTOM_REFRESH_TEXT` | Custom text for Refresh button | `🔄 Update` |
+
+#### Additional Buttons
+
+Add extra buttons with URLs (e.g., rules, maps, external links):
+
+```env
+# Format: Button Text|URL,Another Button|URL
+BUTTON_ADDITIONAL=Rules|https://example.com/rules,Map|https://example.com/map
+```
+
+#### Voter Access Control
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `BUTTON_REQUIRE_VOTE_FOR_VOTERS` | `false` | If `true`, users must vote before viewing the voters list |
+
+### Configuration Examples
+
+#### Example 1: Hide "Maybe" button and refresh button
+
+```env
+BUTTON_SHOW_MAYBE=false
+BUTTON_SHOW_REFRESH=false
+```
+
+#### Example 2: Custom button names in your style
+
+```env
+BUTTON_CUSTOM_JOIN_TEXT=🚴 Count Me In!
+BUTTON_CUSTOM_MAYBE_TEXT=🤔 Thinking...
+BUTTON_CUSTOM_DECLINE_TEXT=😢 Can't Join
+```
+
+#### Example 3: Ukrainian language with additional info button
+
+```env
+LANGUAGE=ua
+BUTTON_ADDITIONAL=Правила|https://example.com/rules
+```
+
+#### Example 4: Restrict voters list to participants only
+
+```env
+BUTTON_REQUIRE_VOTE_FOR_VOTERS=true
+```
+
+This prevents users who haven't voted from seeing who voted.
 
 ### Registration Modes
 

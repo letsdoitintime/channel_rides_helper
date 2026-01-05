@@ -1,0 +1,98 @@
+"""Multi-language translations for buttons and messages."""
+from typing import Dict, Literal
+from dataclasses import dataclass
+
+Language = Literal["en", "ua"]
+
+
+@dataclass
+class ButtonTranslations:
+    """Translations for button texts."""
+    join: str
+    maybe: str
+    decline: str
+    voters: str
+    refresh: str
+    
+
+@dataclass
+class MessageTranslations:
+    """Translations for messages."""
+    registration_title: str
+    vote_recorded: str
+    refreshed: str
+    voters_list_title: str
+    no_votes_yet: str
+    vote_required: str
+    join_label: str
+    maybe_label: str
+    decline_label: str
+    changed_mind: str
+
+
+# English translations
+EN_BUTTONS = ButtonTranslations(
+    join="✅ Join",
+    maybe="❔ Maybe",
+    decline="❌ No",
+    voters="👥 Voters",
+    refresh="🔄 Refresh",
+)
+
+EN_MESSAGES = MessageTranslations(
+    registration_title="🚴 Registration",
+    vote_recorded="Your vote has been recorded!",
+    refreshed="✅ Refreshed!",
+    voters_list_title="👥 **Voters List**",
+    no_votes_yet="_No votes yet_",
+    vote_required="You need to vote first to see the voters list",
+    join_label="Join",
+    maybe_label="Maybe",
+    decline_label="Decline",
+    changed_mind="🔁 Changed mind",
+)
+
+# Ukrainian translations
+UA_BUTTONS = ButtonTranslations(
+    join="✅ Їду",
+    maybe="❔ Можливо",
+    decline="❌ Ні",
+    voters="👥 Учасники",
+    refresh="🔄 Оновити",
+)
+
+UA_MESSAGES = MessageTranslations(
+    registration_title="🚴 Реєстрація",
+    vote_recorded="Ваш голос збережено!",
+    refreshed="✅ Оновлено!",
+    voters_list_title="👥 **Список учасників**",
+    no_votes_yet="_Голосів поки немає_",
+    vote_required="Спочатку проголосуйте, щоб побачити список учасників",
+    join_label="Їду",
+    maybe_label="Можливо",
+    decline_label="Ні",
+    changed_mind="🔁 Змінили думку",
+)
+
+# Translation registry
+TRANSLATIONS: Dict[Language, tuple[ButtonTranslations, MessageTranslations]] = {
+    "en": (EN_BUTTONS, EN_MESSAGES),
+    "ua": (UA_BUTTONS, UA_MESSAGES),
+}
+
+
+def get_translations(language: Language = "en") -> tuple[ButtonTranslations, MessageTranslations]:
+    """Get translations for the specified language.
+    
+    Args:
+        language: Language code ('en' or 'ua')
+        
+    Returns:
+        Tuple of (ButtonTranslations, MessageTranslations)
+        
+    Note:
+        Falls back to English if language is not found.
+    """
+    if language not in TRANSLATIONS:
+        return TRANSLATIONS["en"]
+    return TRANSLATIONS[language]

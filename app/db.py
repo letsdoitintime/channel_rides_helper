@@ -1,7 +1,7 @@
 """Database layer for the bot."""
 import aiosqlite
 from datetime import datetime, timezone
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict, Tuple, Any
 from loguru import logger
 
 
@@ -314,6 +314,23 @@ class Database:
             voters[row["status"]].append(row["user_id"])
         
         return voters
+    
+    async def get_vote(
+        self, channel_id: int, channel_message_id: int, user_id: int
+    ) -> Optional[Dict[str, Any]]:
+        """Get a specific user's vote for a post."""
+        async with self.conn.execute(
+            """
+            SELECT status, first_status, ever_joined, updated_at
+            FROM votes
+            WHERE channel_id = ? AND channel_message_id = ? AND user_id = ?
+            """,
+            (channel_id, channel_message_id, user_id),
+        ) as cursor:
+            row = await cursor.fetchone()
+            if row:
+                return dict(row)
+            return None
     
     async def get_last_vote_time(
         self, channel_id: int, channel_message_id: int, user_id: int

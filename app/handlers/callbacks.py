@@ -10,6 +10,7 @@ from app.services.registration import RegistrationService
 from app.domain.models import VoteStatus
 from app.exceptions import RateLimitError
 from app.utils.user_formatter import format_user_name
+from app.translations import get_translations
 
 
 router = Router()
@@ -62,9 +63,10 @@ def setup_callbacks(
             # Update registration card
             await registration_service.update_registration(channel_id, message_id)
             
-            # Send feedback
+            # Send feedback with translation
+            _, msg_trans = get_translations(config.language)
             status_emoji = {"join": "✅", "maybe": "❔", "decline": "❌"}
-            await callback.answer(f"{status_emoji[status]} Your vote has been recorded!")
+            await callback.answer(f"{status_emoji[status]} {msg_trans.vote_recorded}")
             
         except ValueError as e:
             logger.error(f"Invalid callback data format: {callback.data}")
@@ -90,7 +92,9 @@ def setup_callbacks(
             # Update registration card
             await registration_service.update_registration(channel_id, message_id)
             
-            await callback.answer("✅ Refreshed!")
+            # Send feedback with translation
+            _, msg_trans = get_translations(config.language)
+            await callback.answer(msg_trans.refreshed)
             
         except Exception as e:
             logger.error(f"Error handling refresh: {e}", exc_info=True)
@@ -110,35 +114,46 @@ def setup_callbacks(
             channel_id = int(channel_id_str)
             message_id = int(message_id_str)
             
+            # Get translations
+            _, msg_trans = get_translations(config.language)
+            
+            # Check if user has voted (if required by config)
+            if config.button_config.require_vote_to_see_voters:
+                # Check if user has voted
+                user_vote = await db.get_vote(channel_id, message_id, callback.from_user.id)
+                if not user_vote:
+                    await callback.answer(msg_trans.vote_required, show_alert=True)
+                    return
+            
             # Get voters grouped by status
             voters = await db.get_voters_by_status(channel_id, message_id)
             
             # Build message text
-            text = "👥 **Voters List**\n\n"
+            text = f"{msg_trans.voters_list_title}\n\n"
             
             if voters["join"]:
-                text += f"✅ **Join ({len(voters['join'])})**\n"
+                text += f"✅ **{msg_trans.join_label} ({len(voters['join'])})**\n"
                 for user_id in voters["join"]:
                     name = await format_user_name(callback.bot, user_id)
                     text += f"  • {name}\n"
                 text += "\n"
             
             if voters["maybe"]:
-                text += f"❔ **Maybe ({len(voters['maybe'])})**\n"
+                text += f"❔ **{msg_trans.maybe_label} ({len(voters['maybe'])})**\n"
                 for user_id in voters["maybe"]:
                     name = await format_user_name(callback.bot, user_id)
                     text += f"  • {name}\n"
                 text += "\n"
             
             if voters["decline"]:
-                text += f"❌ **Decline ({len(voters['decline'])})**\n"
+                text += f"❌ **{msg_trans.decline_label} ({len(voters['decline'])})**\n"
                 for user_id in voters["decline"]:
                     name = await format_user_name(callback.bot, user_id)
                     text += f"  • {name}\n"
                 text += "\n"
             
             if not any(voters.values()):
-                text += "_No votes yet_"
+                text += msg_trans.no_votes_yet
             
             # Check if discussion group is configured
             if not config.discussion_group_id:

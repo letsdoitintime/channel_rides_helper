@@ -1,5 +1,5 @@
 """Registration service for creating and updating registration cards."""
-from typing import Optional, Dict, Tuple
+from typing import Optional, Dict, Tuple, List
 from aiogram import Bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from aiogram.exceptions import TelegramAPIError
@@ -9,6 +9,7 @@ from app.db import Database
 from app.config import Config
 from app.domain.models import RegistrationMode, VoteCounts
 from app.utils.message_parser import create_message_link
+from app.translations import get_translations
 
 
 class RegistrationService:
@@ -22,51 +23,98 @@ class RegistrationService:
     def _create_registration_keyboard(
         self, channel_id: int, message_id: int
     ) -> InlineKeyboardMarkup:
-        """Create inline keyboard for registration."""
-        # Use shortened callback data to avoid 64-byte limit
-        # Format: v:status:channel_id:message_id
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [
+        """Create inline keyboard for registration based on configuration."""
+        # Get translations
+        button_trans, _ = get_translations(self.config.language)
+        
+        # Build vote buttons row
+        vote_buttons = []
+        
+        if self.config.button_config.show_join:
+            text = self.config.button_config.custom_join_text or button_trans.join
+            vote_buttons.append(
                 InlineKeyboardButton(
-                    text="✅ Join",
+                    text=text,
                     callback_data=f"v:join:{channel_id}:{message_id}"
-                ),
+                )
+            )
+        
+        if self.config.button_config.show_maybe:
+            text = self.config.button_config.custom_maybe_text or button_trans.maybe
+            vote_buttons.append(
                 InlineKeyboardButton(
-                    text="❔ Maybe",
+                    text=text,
                     callback_data=f"v:maybe:{channel_id}:{message_id}"
-                ),
+                )
+            )
+        
+        if self.config.button_config.show_decline:
+            text = self.config.button_config.custom_decline_text or button_trans.decline
+            vote_buttons.append(
                 InlineKeyboardButton(
-                    text="❌ No",
+                    text=text,
                     callback_data=f"v:decline:{channel_id}:{message_id}"
-                ),
-            ],
-            [
+                )
+            )
+        
+        # Build action buttons row
+        action_buttons = []
+        
+        if self.config.button_config.show_voters:
+            text = self.config.button_config.custom_voters_text or button_trans.voters
+            action_buttons.append(
                 InlineKeyboardButton(
-                    text="👥 Voters",
+                    text=text,
                     callback_data=f"voters:{channel_id}:{message_id}"
-                ),
+                )
+            )
+        
+        if self.config.button_config.show_refresh:
+            text = self.config.button_config.custom_refresh_text or button_trans.refresh
+            action_buttons.append(
                 InlineKeyboardButton(
-                    text="🔄 Refresh",
+                    text=text,
                     callback_data=f"refresh:{channel_id}:{message_id}"
-                ),
-            ],
-        ])
-        return keyboard
+                )
+            )
+        
+        # Build keyboard layout
+        keyboard_rows: List[List[InlineKeyboardButton]] = []
+        
+        if vote_buttons:
+            keyboard_rows.append(vote_buttons)
+        
+        if action_buttons:
+            keyboard_rows.append(action_buttons)
+        
+        # Add additional buttons
+        for button in self.config.button_config.additional_buttons:
+            keyboard_rows.append([
+                InlineKeyboardButton(
+                    text=button["text"],
+                    url=button["url"]
+                )
+            ])
+        
+        return InlineKeyboardMarkup(inline_keyboard=keyboard_rows)
     
     async def _create_registration_text(
         self, channel_id: int, message_id: int
     ) -> str:
         """Create registration card text with current stats."""
+        # Get translations
+        _, msg_trans = get_translations(self.config.language)
+        
         counts = await self.db.get_vote_counts(channel_id, message_id)
         changed_mind = await self.db.get_changed_mind_count(channel_id, message_id)
         
-        text = "🚴 Registration\n\n"
-        text += f"✅ Join: {counts['join']}\n"
-        text += f"❔ Maybe: {counts['maybe']}\n"
-        text += f"❌ No: {counts['decline']}\n"
+        text = f"{msg_trans.registration_title}\n\n"
+        text += f"✅ {msg_trans.join_label}: {counts['join']}\n"
+        text += f"❔ {msg_trans.maybe_label}: {counts['maybe']}\n"
+        text += f"❌ {msg_trans.decline_label}: {counts['decline']}\n"
         
         if self.config.show_changed_mind_stats and changed_mind > 0:
-            text += f"🔁 Changed mind: {changed_mind}\n"
+            text += f"{msg_trans.changed_mind}: {changed_mind}\n"
         
         return text
     
