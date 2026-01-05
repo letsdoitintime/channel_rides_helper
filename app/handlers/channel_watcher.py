@@ -6,36 +6,13 @@ from loguru import logger
 from app.db import Database
 from app.config import Config
 from app.services.registration import RegistrationService
+from app.services.message_filter import MessageFilterService
 
 
 router = Router()
 
 # Store media group IDs temporarily to handle albums
 _processing_media_groups = set()
-
-
-async def should_process_message(message: Message, config: Config) -> bool:
-    """Check if message should trigger registration creation."""
-    # Ignore messages from bots (except if we want to track our own posts)
-    if message.from_user and message.from_user.is_bot:
-        return False
-    
-    # Check ride filter
-    if config.ride_filter == "all":
-        return True
-    
-    # Check for hashtags
-    if config.ride_filter == "hashtag":
-        text = message.text or message.caption or ""
-        
-        # Check if any configured hashtag is present
-        for hashtag in config.ride_hashtags:
-            if hashtag.lower() in text.lower():
-                return True
-        
-        return False
-    
-    return False
 
 
 def setup_channel_watcher(
@@ -45,12 +22,18 @@ def setup_channel_watcher(
 ):
     """Setup channel watcher handler."""
     
+    # Initialize message filter service
+    message_filter = MessageFilterService(
+        config.ride_filter,
+        config.ride_hashtags
+    )
+    
     @router.channel_post(F.chat.id == config.rides_channel_id)
     async def handle_channel_post(message: Message):
         """Handle new posts in the rides channel."""
         try:
-            # Check if we should process this message
-            if not await should_process_message(message, config):
+            # Check if we should process this message using message filter service
+            if not message_filter.should_process(message):
                 logger.debug(f"Skipping message {message.message_id} (filter rules)")
                 return
             

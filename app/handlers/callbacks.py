@@ -1,5 +1,4 @@
 """Callback handlers for vote buttons and other interactions."""
-from datetime import datetime, timedelta, timezone
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
 from loguru import logger
@@ -7,6 +6,7 @@ from loguru import logger
 from app.db import Database
 from app.config import Config
 from app.services.registration import RegistrationService
+from app.services.vote_service import VoteService
 from app.domain.models import VoteStatus
 from app.exceptions import RateLimitError
 from app.utils.user_formatter import format_user_name
@@ -22,6 +22,9 @@ def setup_callbacks(
     registration_service: RegistrationService,
 ):
     """Setup callback handlers."""
+    
+    # Initialize vote service
+    vote_service = VoteService(db, config.vote_cooldown)
     
     @router.callback_query(F.data.startswith("v:"))
     async def handle_vote(callback: CallbackQuery):
@@ -42,23 +45,19 @@ def setup_callbacks(
                 await callback.answer("Invalid status", show_alert=True)
                 return
             
-            # Rate limiting check
-            if config.vote_cooldown > 0:
-                last_vote = await db.get_last_vote_time(
-                    channel_id, message_id, callback.from_user.id
-                )
-                if last_vote:
-                    time_since_last = datetime.now(timezone.utc) - last_vote
-                    if time_since_last < timedelta(seconds=config.vote_cooldown):
-                        remaining = config.vote_cooldown - time_since_last.total_seconds()
-                        await callback.answer(
-                            f"Please wait {remaining:.0f}s before voting again",
-                            show_alert=False
-                        )
-                        return
+            vote_status = VoteStatus(status)
             
-            # Update vote in database
-            await db.upsert_vote(channel_id, message_id, callback.from_user.id, status)
+            # Cast vote using vote service (handles rate limiting)
+            try:
+                await vote_service.cast_vote(
+                    channel_id, message_id, callback.from_user.id, vote_status
+                )
+            except RateLimitError as e:
+                await callback.answer(
+                    f"Please wait {e.seconds_remaining:.0f}s before voting again",
+                    show_alert=False
+                )
+                return
             
             # Update registration card
             await registration_service.update_registration(channel_id, message_id)
@@ -119,9 +118,11 @@ def setup_callbacks(
             
             # Check if user has voted (if required by config)
             if config.button_config.require_vote_to_see_voters:
-                # Check if user has voted
-                user_vote = await db.get_vote(channel_id, message_id, callback.from_user.id)
-                if not user_vote:
+                # Check if user has voted using vote service
+                has_voted = await vote_service.user_has_voted(
+                    channel_id, message_id, callback.from_user.id
+                )
+                if not has_voted:
                     await callback.answer(msg_trans.vote_required, show_alert=True)
                     return
             
