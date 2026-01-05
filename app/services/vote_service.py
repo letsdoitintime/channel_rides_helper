@@ -4,25 +4,23 @@ from typing import Dict, List, Optional
 
 from loguru import logger
 
-from app.db import Database
 from app.domain.models import VoteStatus, VoteCounts
-from app.repositories.vote_repository import VoteRepository
+from app.repositories.interfaces import IVoteRepository
 from app.exceptions import RateLimitError, VoteError
 
 
 class VoteService:
     """Service for managing vote operations."""
     
-    def __init__(self, db: Database, vote_cooldown: int = 1):
+    def __init__(self, vote_repository: IVoteRepository, vote_cooldown: int = 1):
         """
         Initialize vote service.
         
         Args:
-            db: Database instance
+            vote_repository: Vote repository implementation
             vote_cooldown: Minimum seconds between votes (default: 1)
         """
-        self.db = db
-        self.vote_repository = VoteRepository(db)
+        self.vote_repository = vote_repository
         self.vote_cooldown = vote_cooldown
     
     async def cast_vote(

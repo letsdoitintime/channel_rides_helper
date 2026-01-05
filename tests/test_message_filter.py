@@ -138,3 +138,19 @@ def test_get_hashtags_from_caption():
     assert "#ride" in hashtags
     assert "#cycling" in hashtags
     assert len(hashtags) == 2
+
+
+def test_get_hashtags_with_punctuation():
+    """Test that hashtags with punctuation are correctly extracted."""
+    service = MessageFilterService(ride_filter="all", ride_hashtags=[])
+    
+    # Hashtags followed by punctuation should not include punctuation
+    message = create_mock_message("Join #ride! and #cycling, it's #fun.")
+    hashtags = service.get_hashtags_from_message(message)
+    
+    assert "#ride" in hashtags
+    assert "#cycling" in hashtags
+    assert "#fun" in hashtags
+    assert "#ride!" not in hashtags
+    assert "#cycling," not in hashtags
+    assert len(hashtags) == 3

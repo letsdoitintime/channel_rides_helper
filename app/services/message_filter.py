@@ -1,4 +1,5 @@
 """Message filter service for determining which messages to process."""
+import re
 from typing import List
 from aiogram.types import Message
 from loguru import logger
@@ -86,8 +87,10 @@ class MessageFilterService:
         """
         text = message.text or message.caption or ""
         
-        # Simple hashtag extraction (words starting with #)
-        words = text.split()
-        hashtags = [word for word in words if word.startswith("#")]
+        # Use regex to extract hashtags (# followed by alphanumeric chars and underscores)
+        # This pattern matches: #hashtag, #hashtag123, #hash_tag
+        # But not: #hashtag! (excludes punctuation)
+        hashtag_pattern = r'#[a-zA-Z0-9_]+'
+        hashtags = re.findall(hashtag_pattern, text)
         
         return hashtags

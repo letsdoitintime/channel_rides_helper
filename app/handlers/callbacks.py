@@ -7,6 +7,7 @@ from app.db import Database
 from app.config import Config
 from app.services.registration import RegistrationService
 from app.services.vote_service import VoteService
+from app.repositories.vote_repository import VoteRepository
 from app.domain.models import VoteStatus
 from app.exceptions import RateLimitError
 from app.utils.user_formatter import format_user_name
@@ -23,8 +24,9 @@ def setup_callbacks(
 ):
     """Setup callback handlers."""
     
-    # Initialize vote service
-    vote_service = VoteService(db, config.vote_cooldown)
+    # Initialize vote service with repository
+    vote_repo = VoteRepository(db)
+    vote_service = VoteService(vote_repo, config.vote_cooldown)
     
     @router.callback_query(F.data.startswith("v:"))
     async def handle_vote(callback: CallbackQuery):
