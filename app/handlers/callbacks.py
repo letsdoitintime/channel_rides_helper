@@ -7,6 +7,9 @@ from loguru import logger
 from app.db import Database
 from app.config import Config
 from app.services.registration import RegistrationService
+from app.domain.models import VoteStatus
+from app.exceptions import RateLimitError
+from app.utils.user_formatter import format_user_name
 
 
 router = Router()
@@ -116,34 +119,21 @@ def setup_callbacks(
             if voters["join"]:
                 text += f"✅ **Join ({len(voters['join'])})**\n"
                 for user_id in voters["join"]:
-                    # Try to get user info
-                    try:
-                        user = await callback.bot.get_chat(user_id)
-                        name = user.full_name or user.username or f"User {user_id}"
-                    except:
-                        name = f"User {user_id}"
+                    name = await format_user_name(callback.bot, user_id)
                     text += f"  • {name}\n"
                 text += "\n"
             
             if voters["maybe"]:
                 text += f"❔ **Maybe ({len(voters['maybe'])})**\n"
                 for user_id in voters["maybe"]:
-                    try:
-                        user = await callback.bot.get_chat(user_id)
-                        name = user.full_name or user.username or f"User {user_id}"
-                    except:
-                        name = f"User {user_id}"
+                    name = await format_user_name(callback.bot, user_id)
                     text += f"  • {name}\n"
                 text += "\n"
             
             if voters["decline"]:
                 text += f"❌ **Decline ({len(voters['decline'])})**\n"
                 for user_id in voters["decline"]:
-                    try:
-                        user = await callback.bot.get_chat(user_id)
-                        name = user.full_name or user.username or f"User {user_id}"
-                    except:
-                        name = f"User {user_id}"
+                    name = await format_user_name(callback.bot, user_id)
                     text += f"  • {name}\n"
                 text += "\n"
             

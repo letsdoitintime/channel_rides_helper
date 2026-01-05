@@ -1,7 +1,7 @@
 """Tests for admin commands."""
 import pytest
 
-from app.handlers.admin import parse_message_link
+from app.utils.message_parser import parse_message_link
 
 
 def test_parse_private_channel_link():

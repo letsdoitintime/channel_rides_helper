@@ -1,5 +1,4 @@
 """Admin command handlers."""
-import re
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
@@ -7,6 +6,8 @@ from loguru import logger
 
 from app.db import Database
 from app.config import Config
+from app.utils.message_parser import parse_message_link
+from app.utils.user_formatter import format_user_name
 
 
 router = Router()
@@ -15,26 +16,6 @@ router = Router()
 def is_admin(user_id: int, config: Config) -> bool:
     """Check if user is an admin."""
     return user_id in config.admin_user_ids
-
-
-def parse_message_link(text: str) -> tuple[int, int] | None:
-    """
-    Parse t.me message link to extract channel_id and message_id.
-    
-    Supports formats:
-    - https://t.me/c/1234567890/123
-    - t.me/c/1234567890/123
-    - https://t.me/channel_username/123
-    """
-    # Pattern for private channel links: t.me/c/{channel_id}/{message_id}
-    private_pattern = r't\.me/c/(\d+)/(\d+)'
-    match = re.search(private_pattern, text)
-    if match:
-        channel_id = int(f"-100{match.group(1)}")  # Add -100 prefix
-        message_id = int(match.group(2))
-        return channel_id, message_id
-    
-    return None
 
 
 def setup_admin_commands(db: Database, config: Config):
@@ -107,40 +88,22 @@ def setup_admin_commands(db: Database, config: Config):
             if voters["join"]:
                 text += f"✅ **Join ({len(voters['join'])})**\n"
                 for user_id in voters["join"]:
-                    try:
-                        user = await message.bot.get_chat(user_id)
-                        name = user.full_name or user.username or f"User {user_id}"
-                        username = f"@{user.username}" if user.username else ""
-                    except:
-                        name = f"User {user_id}"
-                        username = ""
-                    text += f"  • {name} {username}\n"
+                    name = await format_user_name(message.bot, user_id, include_username=True)
+                    text += f"  • {name}\n"
                 text += "\n"
             
             if voters["maybe"]:
                 text += f"❔ **Maybe ({len(voters['maybe'])})**\n"
                 for user_id in voters["maybe"]:
-                    try:
-                        user = await message.bot.get_chat(user_id)
-                        name = user.full_name or user.username or f"User {user_id}"
-                        username = f"@{user.username}" if user.username else ""
-                    except:
-                        name = f"User {user_id}"
-                        username = ""
-                    text += f"  • {name} {username}\n"
+                    name = await format_user_name(message.bot, user_id, include_username=True)
+                    text += f"  • {name}\n"
                 text += "\n"
             
             if voters["decline"]:
                 text += f"❌ **Decline ({len(voters['decline'])})**\n"
                 for user_id in voters["decline"]:
-                    try:
-                        user = await message.bot.get_chat(user_id)
-                        name = user.full_name or user.username or f"User {user_id}"
-                        username = f"@{user.username}" if user.username else ""
-                    except:
-                        name = f"User {user_id}"
-                        username = ""
-                    text += f"  • {name} {username}\n"
+                    name = await format_user_name(message.bot, user_id, include_username=True)
+                    text += f"  • {name}\n"
                 text += "\n"
             
             if not any(voters.values()):
