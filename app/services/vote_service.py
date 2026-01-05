@@ -110,8 +110,11 @@ class VoteService:
         Returns:
             True if user has voted, False otherwise
         """
-        vote = await self.db.get_vote(channel_id, message_id, user_id)
-        return vote is not None
+        # Check if user has a vote by checking last vote time
+        last_vote_time = await self.vote_repository.get_last_vote_time(
+            channel_id, message_id, user_id
+        )
+        return last_vote_time is not None
     
     async def _check_rate_limit(
         self, channel_id: int, message_id: int, user_id: int
