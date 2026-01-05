@@ -1,0 +1,57 @@
+# Multi-language translations for the Channel Rides Helper Bot
+# Add new languages by following the same structure
+
+# English (en)
+en:
+  buttons:
+    join: "✅ Join"
+    maybe: "❔ Maybe"
+    decline: "❌ No"
+    voters: "👥 Voters"
+    refresh: "🔄 Refresh"
+  
+  messages:
+    registration_title: "🚴 Registration"
+    vote_recorded: "Your vote has been recorded!"
+    refreshed: "✅ Refreshed!"
+    voters_list_title: "👥 **Voters List**"
+    no_votes_yet: "_No votes yet_"
+    vote_required: "You need to vote first to see the voters list"
+    join_label: "Join"
+    maybe_label: "Maybe"
+    decline_label: "Decline"
+    changed_mind: "🔁 Changed mind"
+
+# Ukrainian (ua)
+ua:
+  buttons:
+    join: "✅ Їду"
+    maybe: "❔ Можливо"
+    decline: "❌ Ні"
+    voters: "👥 Учасники"
+    refresh: "🔄 Оновити"
+  
+  messages:
+    registration_title: "🚴 Реєстрація"
+    vote_recorded: "Ваш голос збережено!"
+    refreshed: "✅ Оновлено!"
+    voters_list_title: "👥 **Список учасників**"
+    no_votes_yet: "_Голосів поки немає_"
+    vote_required: "Спочатку проголосуйте, щоб побачити список учасників"
+    join_label: "Їду"
+    maybe_label: "Можливо"
+    decline_label: "Ні"
+    changed_mind: "🔁 Змінили думку"
+
+# Add more languages here following the same structure
+# Example for German (de):
+# de:
+#   buttons:
+#     join: "✅ Dabei"
+#     maybe: "❔ Vielleicht"
+#     decline: "❌ Nein"
+#     voters: "👥 Teilnehmer"
+#     refresh: "🔄 Aktualisieren"
+#   messages:
+#     registration_title: "🚴 Anmeldung"
+#     ...

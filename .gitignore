@@ -36,6 +36,9 @@ env/
 # Environment variables
 .env
 
+# Configuration files (user-specific)
+config/buttons.yaml
+
 # Database
 *.db
 *.sqlite

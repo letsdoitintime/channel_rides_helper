@@ -1,6 +1,9 @@
 """Multi-language translations for buttons and messages."""
 from typing import Dict, Literal
 from dataclasses import dataclass
+from loguru import logger
+
+from app.translation_loader import get_loader
 
 Language = Literal["en", "ua"]
 
@@ -30,7 +33,7 @@ class MessageTranslations:
     changed_mind: str
 
 
-# English translations
+# Hardcoded English translations (fallback if YAML not available)
 EN_BUTTONS = ButtonTranslations(
     join="✅ Join",
     maybe="❔ Maybe",
@@ -52,7 +55,7 @@ EN_MESSAGES = MessageTranslations(
     changed_mind="🔁 Changed mind",
 )
 
-# Ukrainian translations
+# Hardcoded Ukrainian translations (fallback if YAML not available)
 UA_BUTTONS = ButtonTranslations(
     join="✅ Їду",
     maybe="❔ Можливо",
@@ -74,15 +77,42 @@ UA_MESSAGES = MessageTranslations(
     changed_mind="🔁 Змінили думку",
 )
 
-# Translation registry
-TRANSLATIONS: Dict[Language, tuple[ButtonTranslations, MessageTranslations]] = {
+# Hardcoded translation registry (fallback)
+HARDCODED_TRANSLATIONS: Dict[Language, tuple[ButtonTranslations, MessageTranslations]] = {
     "en": (EN_BUTTONS, EN_MESSAGES),
     "ua": (UA_BUTTONS, UA_MESSAGES),
 }
 
 
+def _load_from_yaml(language: str) -> tuple[ButtonTranslations, MessageTranslations] | None:
+    """Load translations from YAML file.
+    
+    Args:
+        language: Language code
+        
+    Returns:
+        Tuple of (ButtonTranslations, MessageTranslations) or None if loading fails
+    """
+    try:
+        loader = get_loader()
+        button_data = loader.get_button_translations(language)
+        message_data = loader.get_message_translations(language)
+        
+        if not button_data or not message_data:
+            return None
+        
+        buttons = ButtonTranslations(**button_data)
+        messages = MessageTranslations(**message_data)
+        return (buttons, messages)
+    except Exception as e:
+        logger.warning(f"Could not load translations from YAML for '{language}': {e}")
+        return None
+
+
 def get_translations(language: Language = "en") -> tuple[ButtonTranslations, MessageTranslations]:
     """Get translations for the specified language.
+    
+    Tries to load from YAML first, falls back to hardcoded translations.
     
     Args:
         language: Language code ('en' or 'ua')
@@ -93,6 +123,14 @@ def get_translations(language: Language = "en") -> tuple[ButtonTranslations, Mes
     Note:
         Falls back to English if language is not found.
     """
-    if language not in TRANSLATIONS:
-        return TRANSLATIONS["en"]
-    return TRANSLATIONS[language]
+    # Try loading from YAML
+    yaml_translations = _load_from_yaml(language)
+    if yaml_translations is not None:
+        return yaml_translations
+    
+    # Fall back to hardcoded translations
+    if language not in HARDCODED_TRANSLATIONS:
+        logger.warning(f"Language '{language}' not found, falling back to English")
+        return HARDCODED_TRANSLATIONS["en"]
+    
+    return HARDCODED_TRANSLATIONS[language]

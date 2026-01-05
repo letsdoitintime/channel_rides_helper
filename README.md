@@ -22,6 +22,9 @@ A production-ready Telegram bot for managing ride registrations from a channel. 
   - Add additional URL buttons
   - Restrict voters list to participants only
 - **🌐 Multi-Language Support**: English and Ukrainian translations built-in
+  - Easy to add new languages via YAML files
+  - Optional YAML configuration for buttons and translations
+  - Falls back to environment variables if YAML not used
 
 ## Requirements
 
@@ -242,6 +245,153 @@ BUTTON_REQUIRE_VOTE_FOR_VOTERS=true
 ```
 
 This prevents users who haven't voted from seeing who voted.
+
+## YAML Configuration (Optional)
+
+The bot supports optional YAML-based configuration for translations and buttons, which makes it easier to manage and add new languages. **This is completely optional** - the bot works perfectly with environment variables alone.
+
+### Why Use YAML Configuration?
+
+- ✅ **Easier to add new languages** - Just add a new section to the YAML file
+- ✅ **Better organization** - All translations in one place
+- ✅ **No code changes needed** - Add/edit translations without touching Python
+- ✅ **Backward compatible** - Falls back to environment variables if YAML not used
+- ✅ **Version control friendly** - Easy to track changes in git
+
+### Translations YAML
+
+Create `config/translations.yaml` to define translations for all languages:
+
+```yaml
+# English (en)
+en:
+  buttons:
+    join: "✅ Join"
+    maybe: "❔ Maybe"
+    decline: "❌ No"
+    voters: "👥 Voters"
+    refresh: "🔄 Refresh"
+  messages:
+    registration_title: "🚴 Registration"
+    vote_recorded: "Your vote has been recorded!"
+    refreshed: "✅ Refreshed!"
+    voters_list_title: "👥 **Voters List**"
+    no_votes_yet: "_No votes yet_"
+    vote_required: "You need to vote first to see the voters list"
+    join_label: "Join"
+    maybe_label: "Maybe"
+    decline_label: "Decline"
+    changed_mind: "🔁 Changed mind"
+
+# Ukrainian (ua)
+ua:
+  buttons:
+    join: "✅ Їду"
+    maybe: "❔ Можливо"
+    decline: "❌ Ні"
+    voters: "👥 Учасники"
+    refresh: "🔄 Оновити"
+  messages:
+    registration_title: "🚴 Реєстрація"
+    vote_recorded: "Ваш голос збережено!"
+    refreshed: "✅ Оновлено!"
+    voters_list_title: "👥 **Список учасників**"
+    no_votes_yet: "_Голосів поки немає_"
+    vote_required: "Спочатку проголосуйте, щоб побачити список учасників"
+    join_label: "Їду"
+    maybe_label: "Можливо"
+    decline_label: "Ні"
+    changed_mind: "🔁 Змінили думку"
+
+# Add more languages easily!
+# de:
+#   buttons:
+#     join: "✅ Dabei"
+#     ...
+```
+
+**To use:** Simply create the file at `config/translations.yaml`. The bot will automatically detect and use it. If the file doesn't exist, the bot uses hardcoded translations.
+
+### Button Configuration YAML
+
+Create `config/buttons.yaml` to configure buttons via YAML instead of environment variables:
+
+```yaml
+# Button visibility - control which buttons are shown
+visibility:
+  show_join: true
+  show_maybe: true
+  show_decline: true
+  show_voters: true
+  show_refresh: true
+
+# Custom button text (optional)
+# If null, uses translations from translations.yaml
+custom_text:
+  join: null            # or "✅ I'm In"
+  maybe: null           # or "❔ Not Sure"
+  decline: null         # or "❌ Can't Make It"
+  voters: null          # or "👥 Show List"
+  refresh: null         # or "🔄 Update"
+
+# Additional buttons with URLs (optional)
+additional_buttons:
+  - text: "Rules"
+    url: "https://example.com/rules"
+  - text: "Map"
+    url: "https://example.com/map"
+
+# Access control
+access_control:
+  require_vote_to_see_voters: false
+```
+
+**To use:** 
+1. Copy `config/buttons.yaml.example` to `config/buttons.yaml`
+2. Edit as needed
+3. If the file exists, it takes precedence over environment variables
+4. If the file doesn't exist, environment variables are used (backward compatible)
+
+### Adding a New Language
+
+To add a new language (e.g., German):
+
+1. Edit `config/translations.yaml` and add a new section:
+
+```yaml
+de:
+  buttons:
+    join: "✅ Dabei"
+    maybe: "❔ Vielleicht"
+    decline: "❌ Nein"
+    voters: "👥 Teilnehmer"
+    refresh: "🔄 Aktualisieren"
+  messages:
+    registration_title: "🚴 Anmeldung"
+    vote_recorded: "Ihre Stimme wurde aufgezeichnet!"
+    refreshed: "✅ Aktualisiert!"
+    voters_list_title: "👥 **Teilnehmerliste**"
+    no_votes_yet: "_Noch keine Stimmen_"
+    vote_required: "Sie müssen zuerst abstimmen, um die Teilnehmerliste zu sehen"
+    join_label: "Dabei"
+    maybe_label: "Vielleicht"
+    decline_label: "Nein"
+    changed_mind: "🔁 Meinung geändert"
+```
+
+2. Update the `Language` type in `app/translations.py` to include the new language
+3. Add validation in `app/config.py` for the new language code
+4. Set `LANGUAGE=de` in your `.env` file
+
+That's it! No other code changes needed.
+
+### Migration from Environment Variables
+
+Already using environment variables? No problem!
+
+- **Keep using env vars**: Everything works as before
+- **Mix and match**: Use YAML for translations, env vars for buttons (or vice versa)
+- **Gradual migration**: Move to YAML when convenient - both systems work together
 
 ### Registration Modes
 
