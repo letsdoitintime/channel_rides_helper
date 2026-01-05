@@ -1,12 +1,44 @@
 """Configuration management for the bot."""
 import os
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from dotenv import load_dotenv
 
 from app.exceptions import ConfigurationError
+from app.translations import Language
 
 load_dotenv()
+
+
+@dataclass
+class ButtonConfig:
+    """Configuration for registration buttons."""
+    
+    # Button visibility
+    show_join: bool = True
+    show_maybe: bool = True
+    show_decline: bool = True
+    show_voters: bool = True
+    show_refresh: bool = True
+    
+    # Custom button names (if None, uses translation)
+    custom_join_text: Optional[str] = None
+    custom_maybe_text: Optional[str] = None
+    custom_decline_text: Optional[str] = None
+    custom_voters_text: Optional[str] = None
+    custom_refresh_text: Optional[str] = None
+    
+    # Additional buttons (format: {"text": "Button Text", "url": "https://..."})
+    additional_buttons: List[Dict[str, str]] = field(default_factory=list)
+    
+    # Voter access control
+    require_vote_to_see_voters: bool = False
+    
+    def __post_init__(self):
+        """Validate button configuration."""
+        # At least one vote button must be visible
+        if not (self.show_join or self.show_maybe or self.show_decline):
+            raise ConfigurationError("At least one vote button (join, maybe, decline) must be visible")
 
 
 @dataclass
@@ -34,10 +66,15 @@ class Config:
     vote_cooldown: int
     show_changed_mind_stats: bool
     
+    # Button configuration
+    button_config: ButtonConfig = field(default_factory=ButtonConfig)
+    language: Language = "en"
+    
     # Valid values for validation
     VALID_REGISTRATION_MODES = {"edit_channel", "discussion_thread", "channel_reply_post"}
     VALID_RIDE_FILTERS = {"hashtag", "all"}
     VALID_LOG_LEVELS = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+    VALID_LANGUAGES = {"en", "ua"}
     
     def __post_init__(self):
         """Validate configuration after initialization."""
@@ -70,6 +107,13 @@ class Config:
         if self.vote_cooldown < 0:
             raise ConfigurationError(
                 f"VOTE_COOLDOWN must be non-negative, got: {self.vote_cooldown}"
+            )
+        
+        # Validate language
+        if self.language not in self.VALID_LANGUAGES:
+            raise ConfigurationError(
+                f"Invalid LANGUAGE: {self.language}. "
+                f"Valid options: {', '.join(self.VALID_LANGUAGES)}"
             )
         
         # Validate hashtags if filter is set to hashtag
@@ -131,6 +175,25 @@ class Config:
         
         show_changed_mind_stats = os.getenv("SHOW_CHANGED_MIND_STATS", "true").lower() == "true"
         
+        # Parse language
+        language = os.getenv("LANGUAGE", "en").lower()
+        
+        # Parse button configuration
+        button_config = ButtonConfig(
+            show_join=os.getenv("BUTTON_SHOW_JOIN", "true").lower() == "true",
+            show_maybe=os.getenv("BUTTON_SHOW_MAYBE", "true").lower() == "true",
+            show_decline=os.getenv("BUTTON_SHOW_DECLINE", "true").lower() == "true",
+            show_voters=os.getenv("BUTTON_SHOW_VOTERS", "true").lower() == "true",
+            show_refresh=os.getenv("BUTTON_SHOW_REFRESH", "true").lower() == "true",
+            custom_join_text=os.getenv("BUTTON_CUSTOM_JOIN_TEXT") or None,
+            custom_maybe_text=os.getenv("BUTTON_CUSTOM_MAYBE_TEXT") or None,
+            custom_decline_text=os.getenv("BUTTON_CUSTOM_DECLINE_TEXT") or None,
+            custom_voters_text=os.getenv("BUTTON_CUSTOM_VOTERS_TEXT") or None,
+            custom_refresh_text=os.getenv("BUTTON_CUSTOM_REFRESH_TEXT") or None,
+            additional_buttons=cls._parse_additional_buttons(os.getenv("BUTTON_ADDITIONAL", "")),
+            require_vote_to_see_voters=os.getenv("BUTTON_REQUIRE_VOTE_FOR_VOTERS", "false").lower() == "true",
+        )
+        
         return cls(
             bot_token=bot_token,
             rides_channel_id=rides_channel_id,
@@ -145,4 +208,33 @@ class Config:
             timezone=timezone,
             vote_cooldown=vote_cooldown,
             show_changed_mind_stats=show_changed_mind_stats,
+            button_config=button_config,
+            language=language,
         )
+    
+    @staticmethod
+    def _parse_additional_buttons(buttons_str: str) -> List[Dict[str, str]]:
+        """Parse additional buttons from environment variable.
+        
+        Format: "Button1|https://example.com,Button2|https://example2.com"
+        """
+        buttons = []
+        if not buttons_str:
+            return buttons
+        
+        for button_def in buttons_str.split(","):
+            button_def = button_def.strip()
+            if not button_def:
+                continue
+            
+            parts = button_def.split("|")
+            if len(parts) != 2:
+                raise ConfigurationError(
+                    f"Invalid additional button format: {button_def}. "
+                    "Expected format: 'Button Text|https://url'"
+                )
+            
+            text, url = parts
+            buttons.append({"text": text.strip(), "url": url.strip()})
+        
+        return buttons
